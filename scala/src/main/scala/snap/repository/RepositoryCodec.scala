@@ -95,14 +95,8 @@ object RepositoryCodec {
     for {
       a <- presentPaths
       b <- presentPaths
-      if a != b && isSegmentPrefixOf(a, b)
+      if a != b && TrackedPath.isSegmentPrefixOf(a, b)
     } throw SnapError(s"tree paths conflict: $a and $b")
-  }
-
-  private def isSegmentPrefixOf(a: String, b: String): Boolean = {
-    val as = a.split("/", -1)
-    val bs = b.split("/", -1)
-    as.length < bs.length && as.indices.forall(i => as(i) == bs(i))
   }
 
   private val TextFields = Set("type", "path", "edit")

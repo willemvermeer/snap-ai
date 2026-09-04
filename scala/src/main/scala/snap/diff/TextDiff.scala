@@ -1,5 +1,6 @@
 package snap.diff
 
+import snap.SnapError
 import snap.repository.EditOp
 
 /**
@@ -22,19 +23,28 @@ object TextDiff {
    * delete consumes them without copying, insert emits new tokens directly. This is
    * `diff`'s inverse, used by tree materialization (plan units 5/7) to reconstruct a
    * text file's content from a patch's stored edit script.
+   *
+   * Also enforces §4.4's "the script MUST consume the complete old token sequence;
+   * there is no implicit trailing retain" — SPEC.md §4.5 step 5's "every change
+   * against its materialized base" validation, which needs the actual base token
+   * count and so can't be checked at schema-decode time (unit 3); it naturally happens
+   * here instead, the one place that always has both the script and the real base.
    */
   def applyScript(oldTokens: Vector[String], script: Vector[EditOp]): Vector[String] = {
     val result = Vector.newBuilder[String]
-    var i = 0
+    var i = 0L
     script.foreach {
       case EditOp.Retain(n) =>
-        result ++= oldTokens.slice(i, i + n.toInt)
-        i += n.toInt
+        if (i + n > oldTokens.length) throw SnapError("edit consumes beyond old content")
+        result ++= oldTokens.slice(i.toInt, (i + n).toInt)
+        i += n
       case EditOp.Delete(n) =>
-        i += n.toInt
+        if (i + n > oldTokens.length) throw SnapError("edit consumes beyond old content")
+        i += n
       case EditOp.Insert(tokens) =>
         result ++= tokens
     }
+    if (i != oldTokens.length) throw SnapError("edit does not consume old content")
     result.result()
   }
 
@@ -71,8 +81,12 @@ object TextDiff {
     coalesce(raw.result())
   }
 
-  /** SPEC.md §5 step 5: "Coalesce adjacent operations of the same kind." */
-  private def coalesce(ops: Vector[EditOp]): Vector[EditOp] = {
+  /**
+   * SPEC.md §5 step 5 / §6.3's closing "coalesce adjacent output operations" — shared
+   * with [[OperationalTransform]], which produces the same kind of uncoalesced,
+   * unit-granularity op stream.
+   */
+  private[diff] def coalesce(ops: Vector[EditOp]): Vector[EditOp] = {
     val result = Vector.newBuilder[EditOp]
     var i = 0
     while (i < ops.length)

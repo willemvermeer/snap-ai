@@ -39,4 +39,16 @@ object TrackedPath {
     }
     if (result != 0) result else Integer.compare(ab.length, bb.length)
   }
+
+  /**
+   * True when `a`'s path segments are a strict prefix of `b`'s — i.e. `a` and `b`
+   * cannot coexist as tracked entries (SPEC.md §2's "prefix-free by path segment").
+   * Used both for the within-patch check at decode time (`RepositoryCodec`) and for
+   * replay's namespace-conflict resolution (§6.2) against a materialized tree.
+   */
+  def isSegmentPrefixOf(a: String, b: String): Boolean = {
+    val as = a.split("/", -1)
+    val bs = b.split("/", -1)
+    as.length < bs.length && as.indices.forall(i => as(i) == bs(i))
+  }
 }
