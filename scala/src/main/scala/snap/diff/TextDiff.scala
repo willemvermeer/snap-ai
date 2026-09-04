@@ -17,6 +17,27 @@ import snap.repository.EditOp
  */
 object TextDiff {
 
+  /**
+   * Applies an edit script to old tokens per SPEC.md §4.4: retain copies old tokens,
+   * delete consumes them without copying, insert emits new tokens directly. This is
+   * `diff`'s inverse, used by tree materialization (plan units 5/7) to reconstruct a
+   * text file's content from a patch's stored edit script.
+   */
+  def applyScript(oldTokens: Vector[String], script: Vector[EditOp]): Vector[String] = {
+    val result = Vector.newBuilder[String]
+    var i = 0
+    script.foreach {
+      case EditOp.Retain(n) =>
+        result ++= oldTokens.slice(i, i + n.toInt)
+        i += n.toInt
+      case EditOp.Delete(n) =>
+        i += n.toInt
+      case EditOp.Insert(tokens) =>
+        result ++= tokens
+    }
+    result.result()
+  }
+
   def diff(oldTokens: Vector[String], newTokens: Vector[String]): Vector[EditOp] = {
     val n = oldTokens.length
     val m = newTokens.length

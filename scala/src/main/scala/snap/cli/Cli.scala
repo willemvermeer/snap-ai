@@ -72,6 +72,14 @@ object Cli {
       env.stdout.print(Usage)
     case "config" :: rest =>
       ConfigCommand.run(rest.toVector, env)
+    case "init" :: rest =>
+      InitCommand.run(rest.toVector, env)
+    case "status" :: rest =>
+      StatusCommand.run(rest.toVector, env)
+    case "log" :: rest =>
+      LogCommand.run(rest.toVector, env)
+    case "commit" :: rest =>
+      CommitCommand.run(rest.toVector, env)
     case _ =>
       throw SnapError("invalid command or arguments")
   }

@@ -1,5 +1,6 @@
 package snap.repository
 
+import snap.SnapError
 import snap.version.Version
 
 /**
@@ -21,4 +22,21 @@ final case class Patch(
    * components equal the base."
    */
   def resultVersion: Version = base.join(Version.fromPairs(Seq(author -> revision)))
+}
+
+object Patch {
+
+  /**
+   * SPEC.md §4.2: "message is a nonempty UTF-8 string. It may contain tab and LF but no
+   * other ASCII control character." Shared by `RepositoryCodec` (reading a historical
+   * patch) and `snap commit` (authoring a new one) — the 4096-byte cap §7.5 additionally
+   * imposes on `commit` is not part of this shared rule, since a generated `revert`
+   * message may legitimately exceed it.
+   */
+  def validateMessage(message: String): Unit = {
+    if (message.isEmpty) throw SnapError("patch message is empty")
+    if (message.exists(c => (c.toInt < 0x20 || c.toInt == 0x7f) && c != '\t' && c != '\n')) {
+      throw SnapError("patch message contains a disallowed control character")
+    }
+  }
 }

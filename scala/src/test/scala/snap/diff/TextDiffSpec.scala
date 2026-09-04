@@ -10,6 +10,24 @@ class TextDiffSpec extends AnyFunSuite with Matchers {
     TextDiff.diff(Vector.empty, Vector.empty) shouldBe Vector.empty
   }
 
+  test("applyScript reconstructs new tokens from old tokens and a script") {
+    val oldTokens = Vector("a\n", "b\n", "c\n")
+    TextDiff.applyScript(
+      oldTokens,
+      Vector(EditOp.Delete(1), EditOp.Retain(1), EditOp.Insert(Vector("x\n")), EditOp.Retain(1))
+    ) shouldBe Vector("b\n", "x\n", "c\n")
+  }
+
+  test("applyScript on an empty script against empty old tokens is empty") {
+    TextDiff.applyScript(Vector.empty, Vector.empty) shouldBe Vector.empty
+  }
+
+  test("diff followed by applyScript round-trips for arbitrary token sequences") {
+    val oldTokens = Vector("a\n", "b\n", "a\n")
+    val newTokens = Vector("b\n", "a\n", "a")
+    TextDiff.applyScript(oldTokens, TextDiff.diff(oldTokens, newTokens)) shouldBe newTokens
+  }
+
   test("diff of identical tokens is a single coalesced retain") {
     val tokens = Vector("a\n", "b\n", "a\n")
     TextDiff.diff(tokens, tokens) shouldBe Vector(EditOp.Retain(3))
@@ -81,23 +99,6 @@ class TextDiffSpec extends AnyFunSuite with Matchers {
     }
   }
 
-  /**
-   * Applies an edit script to old tokens the way SPEC.md §4.4 defines application, to
-   * check round-trip correctness independent of which minimal script the tie rule
-   * picked.
-   */
-  private def applyScript(oldTokens: Vector[String], script: Vector[EditOp]): Vector[String] = {
-    val result = Vector.newBuilder[String]
-    var i = 0
-    script.foreach {
-      case EditOp.Retain(n) =>
-        result ++= oldTokens.slice(i, i + n.toInt)
-        i += n.toInt
-      case EditOp.Delete(n) =>
-        i += n.toInt
-      case EditOp.Insert(tokens) =>
-        result ++= tokens
-    }
-    result.result()
-  }
+  private def applyScript(oldTokens: Vector[String], script: Vector[EditOp]): Vector[String] =
+    TextDiff.applyScript(oldTokens, script)
 }

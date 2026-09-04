@@ -55,7 +55,7 @@ object RepositoryCodec {
         requirePositiveSafeInteger(field(fields, "revision", "patch"), "patch revision")
       val base = decodeVersion(field(fields, "base", "patch"), "base")
       val message = requireString(field(fields, "message", "patch"), "patch message")
-      validateMessage(message)
+      Patch.validateMessage(message)
       val changesJson = requireArray(field(fields, "changes", "patch"), "patch changes")
       if (changesJson.isEmpty) throw SnapError("patch changes is empty")
       val changes = changesJson.map(decodeChange)
@@ -155,7 +155,7 @@ object RepositoryCodec {
         case ("delete", value) => EditOp.Delete(requirePositiveSafeInteger(value, "delete"))
         case ("insert", value) =>
           val items = requireArray(value, "insert")
-          if (items.isEmpty) throw SnapError("insert is empty")
+          if (items.isEmpty) throw SnapError("edit insert is empty")
           EditOp.Insert(items.map {
             case Json.Str(s) if s.nonEmpty => s
             case Json.Str(_) => throw SnapError("insert token is empty")
@@ -201,13 +201,6 @@ object RepositoryCodec {
           }
         }
       case _ => ()
-    }
-  }
-
-  private def validateMessage(message: String): Unit = {
-    if (message.isEmpty) throw SnapError("patch message is empty")
-    if (message.exists(c => (c.toInt < 0x20 || c.toInt == 0x7f) && c != '\t' && c != '\n')) {
-      throw SnapError("patch message contains a disallowed control character")
     }
   }
 
