@@ -80,6 +80,10 @@ object Cli {
       LogCommand.run(rest.toVector, env)
     case "commit" :: rest =>
       CommitCommand.run(rest.toVector, env)
+    case "diff" :: rest =>
+      DiffCommand.run(rest.toVector, env)
+    case "revert" :: rest =>
+      RevertCommand.run(rest.toVector, env)
     case _ =>
       throw SnapError("invalid command or arguments")
   }

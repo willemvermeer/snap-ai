@@ -21,10 +21,17 @@ import snap.repository.{Change, Patch, Repository, RepositoryValidator}
  */
 object TreeMaterializer {
 
-  def materialize(repository: Repository): Map[String, Vector[Byte]] = {
-    val ordered = RepositoryValidator.integrationOrder(repository.patches)
-    ordered.foldLeft(Map.empty[String, Vector[Byte]])(integrate)
-  }
+  def materialize(repository: Repository): Map[String, Vector[Byte]] =
+    materializeOrdered(RepositoryValidator.integrationOrder(repository.patches))
+
+  /**
+   * Integrates patches already in canonical order (e.g. from
+   * [[snap.replay.VersionResolution.resolve]]) — the reusable half of `materialize`,
+   * for callers materializing an arbitrary known version rather than the whole
+   * repository's frontier.
+   */
+  def materializeOrdered(orderedPatches: Vector[Patch]): Map[String, Vector[Byte]] =
+    orderedPatches.foldLeft(Map.empty[String, Vector[Byte]])(integrate)
 
   private def integrate(tree: Map[String, Vector[Byte]], patch: Patch): Map[String, Vector[Byte]] =
     patch.changes.foldLeft(tree) { (t, change) =>

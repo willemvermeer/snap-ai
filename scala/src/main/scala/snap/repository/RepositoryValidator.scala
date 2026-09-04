@@ -68,6 +68,23 @@ object RepositoryValidator {
   }
 
   /**
+   * SPEC.md §3.5: "If import finds the same dot with structurally different patches,
+   * the repository is corrupt and merge fails before writing." Used by cross-repository
+   * `diff --repo` (§7.6) and `merge` (§7.8) alike — both compare patch sets from two
+   * independently-validated repositories without importing one into the other first.
+   */
+  def checkNoCollisions(a: Vector[Patch], b: Vector[Patch]): Unit = {
+    val byDotB = b.map(p => p.dot -> p).toMap
+    a.foreach { patchA =>
+      byDotB.get(patchA.dot).foreach { patchB =>
+        if (patchA != patchB) {
+          throw SnapError(s"patch collision: ${patchA.author} revision ${patchA.revision}")
+        }
+      }
+    }
+  }
+
+  /**
    * SPEC.md §6.1's patch *selection* order only (not §6.2's integration, which needs
    * file content and OT) — repeatedly take the least ready patch, by Snap order of its
    * result version then author then revision, where "ready" means every dot its base
