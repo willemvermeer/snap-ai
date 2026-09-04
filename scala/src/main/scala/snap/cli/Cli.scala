@@ -45,9 +45,31 @@ object Cli {
         }
     }
 
+  // Not part of SPEC.md §7's command grammar — a deliberate extension so `--help`/`-h`
+  // give a way to see the grammar without consulting the spec. Only the bare top-level
+  // form is recognized; extra arguments fall through to the generic grammar error, same
+  // as `--version extra` does.
+  private val Usage =
+    """usage: snap <command> [<args>]
+      |
+      |  snap init [path]                                    create a repository
+      |  snap config [--global] contributor.id <id>           set the contributor id
+      |  snap status                                          show working tree status
+      |  snap log                                             show commit history
+      |  snap commit <message>                                record a new version
+      |  snap diff [<old> <new> [--repo <repository>]]        compare versions
+      |  snap revert <version>                                restore a prior version
+      |  snap merge <repository>                              merge another repository
+      |  snap --serve [port]                                  serve the repository over HTTP
+      |  snap --version                                       print the version
+      |  snap --help                                          print this help
+      |""".stripMargin
+
   private def dispatch(args: Vector[String], env: Env): Unit = args.toList match {
     case "--version" :: Nil =>
       env.stdout.print(s"snap $Version\n")
+    case ("--help" | "-h") :: Nil =>
+      env.stdout.print(Usage)
     case "config" :: rest =>
       ConfigCommand.run(rest.toVector, env)
     case _ =>

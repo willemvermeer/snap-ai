@@ -46,6 +46,27 @@ class CliSpec extends AnyFunSuite with Matchers {
     result.stderr shouldBe "snap: invalid command or arguments\n"
   }
 
+  test("--help prints usage and exits 0") {
+    val result = run(Vector("--help"))
+    result.exitCode shouldBe 0
+    result.stdout should not be empty
+    result.stderr shouldBe ""
+  }
+
+  test("-h prints usage and exits 0") {
+    val result = run(Vector("-h"))
+    result.exitCode shouldBe 0
+    result.stdout should not be empty
+    result.stderr shouldBe ""
+  }
+
+  test("--help rejects extra arguments") {
+    val result = run(Vector("--help", "extra"))
+    result.exitCode shouldBe 1
+    result.stdout shouldBe ""
+    result.stderr shouldBe "snap: invalid command or arguments\n"
+  }
+
   test("an unrecognized command is a grammar error") {
     val result = run(Vector("unknown"))
     result.exitCode shouldBe 1
