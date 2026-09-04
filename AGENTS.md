@@ -23,6 +23,8 @@ code into it or add shell setup operations to test around a missing typed
 operation. Extend its tagged unions additively so existing format-1 cases keep
 their meaning.
 
+We will implement the SPEC.md in scala 2.13.6 and the root folder of the scala sources is ./scala
+
 ## Verification
 
 After implementation changes, run the shared acceptance suite:
