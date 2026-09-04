@@ -43,6 +43,8 @@ object RevertCommand {
     // SPEC.md §10: working files are updated before repository.json is replaced.
     TreeInstaller.install(snapDir.getParent, current, target)
     RepositoryFile.write(snapDir, updated)
-    env.stdout.print(s"${patch.resultVersion.toCanonicalString}\n")
+    env.stdout.print(
+      Rendering.success(env.presentation.stdout, "Reverted", patch.resultVersion.toCanonicalString)
+    )
   }
 }

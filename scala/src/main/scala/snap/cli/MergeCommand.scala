@@ -32,7 +32,9 @@ object MergeCommand {
       // SPEC.md §7.8: "Merging equal or already-contained history succeeds, changes
       // nothing, emits no warnings, and prints the unchanged version" — no working-tree
       // check needed either, since there is nothing to install.
-      env.stdout.print(s"${joined.frontier.toCanonicalString}\n")
+      env.stdout.print(
+        Rendering.success(env.presentation.stdout, "Merged", joined.frontier.toCanonicalString)
+      )
     } else {
       val current = ReplayEngine.replay(RepositoryValidator.integrationOrder(local.patches))
       val working = WorkingTree.scan(snapDir.getParent)
@@ -44,9 +46,13 @@ object MergeCommand {
       TreeInstaller.install(snapDir.getParent, current.tree, joinedReplay.tree)
       RepositoryFile.write(snapDir, Repository(joined.frontier, joined.patches))
 
-      env.stdout.print(s"${joined.frontier.toCanonicalString}\n")
+      env.stdout.print(
+        Rendering.success(env.presentation.stdout, "Merged", joined.frontier.toCanonicalString)
+      )
       newWarnings.foreach { case (path, reason) =>
-        env.stderr.print(s"warning: auto-resolved $path: $reason\n")
+        env.stderr.print(
+          Rendering.warning(env.presentation.stderr, s"auto-resolved $path: $reason")
+        )
       }
     }
   }

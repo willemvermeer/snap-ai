@@ -10,7 +10,7 @@ import snap.SnapError
  * expected errors (`SnapError`) 1, unexpected internal failures 2.
  */
 object Cli {
-  val Version = "0.1.0"
+  val Version = "1.0.0"
 
   /**
    * Everything a command needs, explicit rather than ambient, so commands are testable
@@ -23,7 +23,19 @@ object Cli {
     stderr: PrintStream,
     stdoutIsTty: Boolean,
     stderrIsTty: Boolean
-  )
+  ) {
+
+    /**
+     * SPEC.md §7.11's resolved presentation for this environment's streams. By the
+     * time a command runs this is always `Right` — `run` below has already rejected
+     * an invalid `SNAP_COLOR` before dispatching — so commands can use it directly
+     * without re-handling that error themselves.
+     */
+    def presentation: Presentation =
+      Presentation
+        .resolve(vars, stdoutIsTty, stderrIsTty)
+        .getOrElse(Presentation(stdout = false, stderr = false))
+  }
 
   def run(args: Vector[String], env: Env): Int =
     Presentation.resolve(env.vars, env.stdoutIsTty, env.stderrIsTty) match {
@@ -37,10 +49,12 @@ object Cli {
           0
         } catch {
           case SnapError(message) =>
-            env.stderr.print(s"snap: $message\n")
+            env.stderr.print(Rendering.error(env.presentation.stderr, s"snap: $message"))
             1
           case ex: Throwable =>
-            env.stderr.print(s"snap: internal error: ${ex.getMessage}\n")
+            env.stderr.print(
+              Rendering.error(env.presentation.stderr, s"snap: internal error: ${ex.getMessage}")
+            )
             2
         }
     }
@@ -67,7 +81,7 @@ object Cli {
 
   private def dispatch(args: Vector[String], env: Env): Unit = args.toList match {
     case "--version" :: Nil =>
-      env.stdout.print(s"snap $Version\n")
+      env.stdout.print(Rendering.version(env.presentation.stdout, s"snap $Version"))
     case ("--help" | "-h") :: Nil =>
       env.stdout.print(Usage)
     case "config" :: rest =>

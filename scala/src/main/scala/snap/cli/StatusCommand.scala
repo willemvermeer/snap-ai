@@ -2,7 +2,7 @@ package snap.cli
 
 import snap.SnapError
 import snap.replay.TreeMaterializer
-import snap.workspace.{PathStatus, RepositoryFile, WorkingTree, WorkingTreeStatus}
+import snap.workspace.{RepositoryFile, WorkingTree, WorkingTreeStatus}
 
 /**
  * `snap status` (SPEC.md §7.3): the current version, then working-tree changes sorted
@@ -17,15 +17,12 @@ object StatusCommand {
     val current = TreeMaterializer.materialize(repository)
     val working = WorkingTree.scan(snapDir.getParent)
     val changes = WorkingTreeStatus.compare(current, working)
+    val terminal = env.presentation.stdout
 
-    env.stdout.print(s"version ${repository.frontier.toCanonicalString}\n")
+    env.stdout.print(Rendering.statusHeader(terminal, repository.frontier.toCanonicalString))
+    if (terminal && changes.isEmpty) env.stdout.print(Rendering.statusClean(terminal))
     changes.foreach { case (path, status) =>
-      val code = status match {
-        case PathStatus.Added => "A"
-        case PathStatus.Modified => "M"
-        case PathStatus.Deleted => "D"
-      }
-      env.stdout.print(s"$code $path\n")
+      env.stdout.print(Rendering.statusRow(terminal, status, path))
     }
   }
 }

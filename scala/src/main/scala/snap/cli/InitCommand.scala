@@ -31,6 +31,6 @@ object InitCommand {
     Files.createDirectories(target)
     val snapDir = Files.createDirectory(target.resolve(".snap"))
     RepositoryFile.write(snapDir, Repository(Version.Empty, Vector.empty))
-    env.stdout.print("()\n")
+    env.stdout.print(Rendering.success(env.presentation.stdout, "Initialized repository", "()"))
   }
 }

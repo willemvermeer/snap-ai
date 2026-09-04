@@ -82,9 +82,15 @@ object ServeCommand {
 
     val server = bind(port, snapshot)
     try {
+      // Installed before the ready line is printed: the acceptance suite's `start`
+      // step treats that line as "ready" and may send SIGINT/SIGTERM immediately
+      // after seeing it, so the handler must already be in place by then — otherwise
+      // the JVM's default disposition (terminate with a signal-derived exit code, not
+      // 0) can win the race.
+      val latch = installShutdownHandler()
       env.stdout.print(s"http://127.0.0.1:${server.getAddress.getPort}$ResourcePath\n")
       env.stdout.flush()
-      awaitShutdownSignal()
+      latch.await()
     } finally server.stop(0)
   }
 
@@ -94,7 +100,7 @@ object ServeCommand {
   // Installing these handlers in-process during a unit test would override the whole
   // JVM's signal disposition for the rest of that test run, which is worse than the
   // gap it would close.
-  private def awaitShutdownSignal(): Unit = {
+  private def installShutdownHandler(): CountDownLatch = {
     import sun.misc.{Signal, SignalHandler}
     val latch = new CountDownLatch(1)
     val handler = new SignalHandler {
@@ -102,7 +108,7 @@ object ServeCommand {
     }
     Signal.handle(new Signal("INT"), handler)
     Signal.handle(new Signal("TERM"), handler)
-    latch.await()
+    latch
   }
   // $COVERAGE-ON$
 }

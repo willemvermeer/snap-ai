@@ -40,6 +40,8 @@ object CommitCommand {
     val updated = Repository(patch.resultVersion, (repository.patches :+ patch).sortBy(_.dot))
 
     RepositoryFile.write(snapDir, updated)
-    env.stdout.print(s"${patch.resultVersion.toCanonicalString}\n")
+    env.stdout.print(
+      Rendering.success(env.presentation.stdout, "Committed", patch.resultVersion.toCanonicalString)
+    )
   }
 }

@@ -15,11 +15,10 @@ object LogCommand {
     val snapDir = CliSupport.requireSnapDir(env)
     val repository = RepositoryFile.read(snapDir)
     val ordered = RepositoryValidator.integrationOrder(repository.patches)
-    ordered.reverse.foreach { patch =>
-      env.stdout.print(
-        s"${patch.resultVersion.toCanonicalString}\t${patch.author}\t${escape(patch.message)}\n"
-      )
+    val entries = ordered.reverse.map { patch =>
+      (patch.resultVersion.toCanonicalString, patch.author, escape(patch.message))
     }
+    env.stdout.print(Rendering.logEntries(env.presentation.stdout, entries))
   }
 
   /**

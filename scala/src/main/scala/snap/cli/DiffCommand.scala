@@ -72,8 +72,10 @@ object DiffCommand {
     env: Cli.Env,
     oldTree: Map[String, Vector[Byte]],
     newTree: Map[String, Vector[Byte]]
-  ): Unit =
+  ): Unit = {
+    val terminal = env.presentation.stdout
     WorkingTreeStatus.compare(oldTree, newTree).foreach { case (path, _) =>
-      env.stdout.print(DiffRenderer.render(path, oldTree.get(path), newTree.get(path)))
+      env.stdout.print(DiffRenderer.render(path, oldTree.get(path), newTree.get(path), terminal))
     }
+  }
 }
