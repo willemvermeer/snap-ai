@@ -1,3 +1,5 @@
 .idea
 /test-harness/node_modules/
 /ts/node_modules/
+**/target/
+**/target/**
