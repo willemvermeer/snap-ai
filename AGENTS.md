@@ -50,3 +50,7 @@ Snap’s small surface is deliberate. Do not add branches, staging, checkout,
 push, authentication, object storage, or unresolved-conflict machinery. Spend
 complexity on deterministic behavior, strict validation, and exact tests—not
 on production scalability or command count.
+
+## Development workflow
+
+When implementing this solution, make sure to commit incrementally and run the acceptance suite after each commit. This will help catch regressions early and ensure that your changes are consistent with the specification.
