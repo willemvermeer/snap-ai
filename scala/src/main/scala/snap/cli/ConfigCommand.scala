@@ -3,7 +3,7 @@ package snap.cli
 import java.nio.file.Path
 import snap.SnapError
 import snap.config.Config
-import snap.repo.RepoLocator
+import snap.workspace.RepoLocator
 
 /**
  * `snap config [--global] contributor.id <id>` (SPEC.md §7.2). Grammar is exactly

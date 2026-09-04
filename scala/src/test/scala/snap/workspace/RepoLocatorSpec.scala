@@ -1,4 +1,4 @@
-package snap.repo
+package snap.workspace
 
 import java.nio.file.Files
 import org.scalatest.BeforeAndAfterEach
