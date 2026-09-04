@@ -86,6 +86,8 @@ object Cli {
       RevertCommand.run(rest.toVector, env)
     case "merge" :: rest =>
       MergeCommand.run(rest.toVector, env)
+    case "--serve" :: rest =>
+      ServeCommand.run(rest.toVector, env)
     case _ =>
       throw SnapError("invalid command or arguments")
   }

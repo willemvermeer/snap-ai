@@ -45,11 +45,12 @@ class MergeCommandSpec extends AnyFunSuite with Matchers {
     run(Vector("merge", "a", "b"), root).exitCode shouldBe 1
   }
 
-  test("merge rejects an http(s) operand as not yet supported") {
+  test("merge reports an HTTP operand it cannot reach as a SnapError, not a crash") {
     val root = initializedRepo()
-    val result = run(Vector("merge", "http://example.invalid/repo"), root)
+    val result = run(Vector("merge", "http://127.0.0.1:1/repo"), root)
     result.exitCode shouldBe 1
-    result.stderr shouldBe "snap: HTTP repositories are not yet supported: http://example.invalid/repo\n"
+    result.stdout shouldBe ""
+    result.stderr should startWith("snap: HTTP request failed")
   }
 
   test("merge rejects an operand that is not a Snap repository") {
