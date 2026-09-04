@@ -53,4 +53,16 @@ on production scalability or command count.
 
 ## Development workflow
 
-When implementing this solution, make sure to commit incrementally and run the acceptance suite after each commit. This will help catch regressions early and ensure that your changes are consistent with the specification.
+When implementing this solution, make sure to commit incrementally and run the acceptance 
+suite after each commit. This will help catch regressions early and ensure that your changes 
+are consistent with the specification.
+
+All code written should be in the `./scala` directory, and you should follow the unit structure
+outlined in the implementation plan. Each unit should be cohesive and have a clear internal boundary.
+
+All code written should be covered by clear and concise unit tests, and you should verify that your 
+implementation passes the unit tests suite after each commit.
+
+### Security
+The program should perform input validation on all user-provided data to prevent injection attacks 
+and ensure the integrity of the system.
