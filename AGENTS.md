@@ -63,6 +63,8 @@ outlined in the implementation plan. Each unit should be cohesive and have a cle
 All code written should be covered by clear and concise unit tests, and you should verify that your 
 implementation passes the unit tests suite after each commit.
 
+Do not ever change any file in subdirectories ts, tests, test-harness
+
 ### Security
 The program should perform input validation on all user-provided data to prevent injection attacks 
 and ensure the integrity of the system.
