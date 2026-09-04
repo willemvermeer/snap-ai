@@ -33,7 +33,7 @@ class RepositoryFileSpec extends AnyFunSuite with Matchers {
   test("write replaces a previously written repository.json rather than appending") {
     val snapDir = Files.createTempDirectory("snap-repofile-")
     RepositoryFile.write(snapDir, Repository(Version.Empty, Vector.empty))
-    val patch = Patch("a@x", 1, Version.Empty, "m", Vector(Change.Delete("x")))
+    val patch = Patch("a@x", 1, Version.Empty, "m", Vector(Change.Put("x", Vector(1))))
     val second = Repository(Version.fromPairs(Seq("a@x" -> 1L)), Vector(patch))
     RepositoryFile.write(snapDir, second)
     RepositoryFile.read(snapDir) shouldBe second

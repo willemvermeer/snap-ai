@@ -99,6 +99,14 @@ class TextDiffSpec extends AnyFunSuite with Matchers {
     }
   }
 
+  test("coalesce sums each op's own count, not just the number of adjacent ops") {
+    // Regression: a caller (OperationalTransform) can hand coalesce ops whose count is
+    // already > 1, e.g. a multi-token insert's length. Coalescing must sum counts, not
+    // count how many ops were merged.
+    TextDiff.coalesce(Vector(EditOp.Retain(1), EditOp.Retain(2))) shouldBe Vector(EditOp.Retain(3))
+    TextDiff.coalesce(Vector(EditOp.Delete(2), EditOp.Delete(3))) shouldBe Vector(EditOp.Delete(5))
+  }
+
   private def applyScript(oldTokens: Vector[String], script: Vector[EditOp]): Vector[String] =
     TextDiff.applyScript(oldTokens, script)
 }

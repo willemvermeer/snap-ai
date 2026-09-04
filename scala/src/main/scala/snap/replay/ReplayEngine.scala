@@ -2,6 +2,7 @@ package snap.replay
 
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.mutable
+import snap.SnapError
 import snap.diff.{OperationalTransform, TextDiff, TextTokens}
 import snap.path.TrackedPath
 import snap.repository.{Change, Patch}
@@ -138,14 +139,27 @@ object ReplayEngine {
   /**
    * The authored result `T` of applying `change` to `base` — independent of any
    * concurrent effects, purely "what would this path look like if `change` were the
-   * only thing that happened."
+   * only thing that happened." Also enforces SPEC.md §4.3's "a change that does not
+   * alter path existence or bytes is invalid" (except an empty text edit creating an
+   * empty file, which does alter existence) and its "delete... requires it to be
+   * present" — both need the change's own materialized base and so, like §4.4's
+   * complete-consumption rule, naturally belong here rather than at schema-decode time.
    */
-  private def authoredResult(base: Tree, change: Change): Option[Vector[Byte]] = change match {
-    case _: Change.Delete => None
-    case Change.Put(_, content) => Some(content)
-    case Change.Text(path, edit) =>
-      val oldTokens = base.get(path).map(tokenizeBytes).getOrElse(Vector.empty)
-      Some(joinTokens(TextDiff.applyScript(oldTokens, edit)))
+  private def authoredResult(base: Tree, change: Change): Option[Vector[Byte]] = {
+    val basePath = base.get(change.path)
+    val result = change match {
+      case _: Change.Delete =>
+        if (basePath.isEmpty) throw SnapError(s"delete of absent path: ${change.path}")
+        None
+      case Change.Put(_, content) => Some(content)
+      case Change.Text(path, edit) =>
+        if (basePath.isDefined && !isText(basePath))
+          throw SnapError(s"text edit applied to non-text content: $path")
+        val oldTokens = basePath.map(tokenizeBytes).getOrElse(Vector.empty)
+        Some(joinTokens(TextDiff.applyScript(oldTokens, edit)))
+    }
+    if (result == basePath) throw SnapError("no-op change")
+    result
   }
 
   /**

@@ -71,4 +71,13 @@ class OperationalTransformSpec extends AnyFunSuite with Matchers {
     val q = Vector(retain(3))
     OperationalTransform.transform(p, q) shouldBe Vector(retain(3))
   }
+
+  test("a multi-token Q insert's retain coalesces correctly with a preceding retain") {
+    // Regression for tests/21-version-algebra.yaml: coalescing must sum each op's own
+    // count rather than count the number of ops, or a Q insert-priority retain whose
+    // token count is > 1 gets undercounted when merged with an adjacent retain.
+    val p = Vector(retain(1), insert("A2\n"))
+    val q = Vector(retain(1), insert("B1\n", "B2\n"))
+    OperationalTransform.transform(p, q) shouldBe Vector(retain(3), insert("A2\n"))
+  }
 }

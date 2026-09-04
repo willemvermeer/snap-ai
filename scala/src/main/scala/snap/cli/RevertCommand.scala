@@ -18,7 +18,6 @@ object RevertCommand {
     val targetVersion = Version.parseCanonical(versionArg)
 
     val snapDir = CliSupport.requireSnapDir(env)
-    val author = Config.resolveContributorId(Some(snapDir), env.vars.get("HOME").map(Path.of(_)))
     val repository = RepositoryFile.read(snapDir)
 
     val current = TreeMaterializer.materialize(repository)
@@ -32,6 +31,7 @@ object RevertCommand {
 
     if (current == target) throw SnapError("target tree is already current")
 
+    val author = Config.resolveContributorId(Some(snapDir), env.vars.get("HOME").map(Path.of(_)))
     val changes = WorkingTreeStatus.compare(current, target).map { case (path, _) =>
       ChangeBuilder.build(path, current.get(path), target.get(path))
     }

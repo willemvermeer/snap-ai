@@ -183,6 +183,16 @@ class DiffRevertCommandsSpec extends AnyFunSuite with Matchers {
     result.stderr shouldBe "snap: unknown version: (a@x->1)\n"
   }
 
+  test("revert reports unknown version even when no contributor is configured") {
+    // Regression: an unresolvable target version must be reported before the
+    // contributor-configuration requirement, since the version check needs no author.
+    val root = Files.createTempDirectory("snap-repo-")
+    run(Vector("init"), root).exitCode shouldBe 0
+    val result = run(Vector("revert", "(unknown@x->1)"), root)
+    result.exitCode shouldBe 1
+    result.stderr shouldBe "snap: unknown version: (unknown@x->1)\n"
+  }
+
   test("revert rejects wrong arity") {
     val root = initializedRepo()
     run(Vector("revert"), root).exitCode shouldBe 1

@@ -227,4 +227,38 @@ class ReplayEngineSpec extends AnyFunSuite with Matchers {
 
     result.warnings shouldBe Vector("a/child" -> "namespace-wins", "z/child" -> "namespace-wins")
   }
+
+  test("deleting a path absent from the patch's own base is rejected") {
+    // Matches tests/23-strict-validation-matrix.yaml: a patch with an empty base
+    // deletes a path that only a concurrent sibling patch created.
+    val bob = Patch("bob@x", 1, Version.Empty, "bob", Vector(Change.Delete("f")))
+    val ordered = Vector(bob)
+    val ex = intercept[snap.SnapError](ReplayEngine.replay(ordered))
+    ex.getMessage shouldBe "delete of absent path: f"
+  }
+
+  test("a put with the same content as its own base is a no-op change") {
+    // Matches tests/15-repository-validation.yaml: a second patch re-puts identical
+    // bytes over its own base, altering neither existence nor bytes.
+    val base = seed(Change.Put("f", utf8("a")))
+    val noop = Patch("seed@x", 2, seedVersion, "noop", Vector(Change.Put("f", utf8("a"))))
+    val ex = intercept[snap.SnapError](ReplayEngine.replay(Vector(base, noop)))
+    ex.getMessage shouldBe "no-op change"
+  }
+
+  test("an empty text edit creating a new empty file is not a no-op") {
+    val patch = Patch("seed@x", 1, Version.Empty, "empty", Vector(Change.Text("f", Vector.empty)))
+    val result = ReplayEngine.replay(Vector(patch))
+    result.tree("f") shouldBe Vector.empty
+  }
+
+  test("a text edit against non-text (binary) base content is rejected") {
+    // Matches tests/27-history-canonicality.yaml's "text over binary" case: the base
+    // content contains a NUL byte, so it is never text regardless of the edit script.
+    val base = seed(Change.Put("f", Vector[Byte](0)))
+    val textOverBinary =
+      Patch("seed@x", 2, seedVersion, "bad", Vector(textEdit("f", EditOp.Delete(1))))
+    val ex = intercept[snap.SnapError](ReplayEngine.replay(Vector(base, textOverBinary)))
+    ex.getMessage should include("f")
+  }
 }

@@ -84,6 +84,8 @@ object Cli {
       DiffCommand.run(rest.toVector, env)
     case "revert" :: rest =>
       RevertCommand.run(rest.toVector, env)
+    case "merge" :: rest =>
+      MergeCommand.run(rest.toVector, env)
     case _ =>
       throw SnapError("invalid command or arguments")
   }

@@ -93,11 +93,17 @@ object TextDiff {
       ops(i) match {
         case _: EditOp.Retain =>
           var count = 0L
-          while (i < ops.length && ops(i).isInstanceOf[EditOp.Retain]) { count += 1; i += 1 }
+          while (i < ops.length && ops(i).isInstanceOf[EditOp.Retain]) {
+            count += ops(i).asInstanceOf[EditOp.Retain].count
+            i += 1
+          }
           result += EditOp.Retain(count)
         case _: EditOp.Delete =>
           var count = 0L
-          while (i < ops.length && ops(i).isInstanceOf[EditOp.Delete]) { count += 1; i += 1 }
+          while (i < ops.length && ops(i).isInstanceOf[EditOp.Delete]) {
+            count += ops(i).asInstanceOf[EditOp.Delete].count
+            i += 1
+          }
           result += EditOp.Delete(count)
         case _: EditOp.Insert =>
           val tokens = Vector.newBuilder[String]
