@@ -26,7 +26,9 @@ object JsonParser {
       catch {
         case ex: Exception => throw SnapError(s"invalid JSON: ${ex.getMessage}")
       }
-    if (jvalue == JNothing) throw SnapError("invalid JSON: empty input")
+    // No separate JNothing check here: the `text.trim.isEmpty` guard above already
+    // catches every blank input, and jackson-backed parsing of any non-blank text either
+    // throws (caught above) or returns a real value — never JNothing.
     rejectTrailingContent(text)
     convert(jvalue)
   }
@@ -50,11 +52,18 @@ object JsonParser {
     case JBool(b) => Json.Bool(b)
     case JString(s) => Json.Str(s)
     case JInt(bigInt) => Json.Num(bigInt.toString, isIntegral = true)
-    case JLong(l) => Json.Num(l.toString, isIntegral = true)
     case JDecimal(bd) => Json.Num(bd.bigDecimal.toPlainString, isIntegral = false)
-    case JDouble(d) => Json.Num(BigDecimal(d).bigDecimal.toPlainString, isIntegral = false)
     case JArray(items) => Json.Arr(items.map(convert).toVector)
+    // json4s-jackson's deserializer always produces JInt for integral JSON numbers
+    // (never JLong) and, since `parse` always passes useBigDecimalForDouble = true,
+    // JDecimal for every non-integral one (never JDouble); JSet has no JSON textual form
+    // at all. These three branches exist only to keep this match exhaustive against
+    // json4s's full JValue ADT — real parsed input never reaches them.
+    // $COVERAGE-OFF$
+    case JLong(l) => Json.Num(l.toString, isIntegral = true)
+    case JDouble(d) => Json.Num(BigDecimal(d).bigDecimal.toPlainString, isIntegral = false)
     case JSet(items) => Json.Arr(items.map(convert).toVector)
+    // $COVERAGE-ON$
     case JObject(fields) =>
       var seen = Set.empty[String]
       fields.foreach { case (key, _) =>

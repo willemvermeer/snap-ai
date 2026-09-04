@@ -49,6 +49,30 @@ class ConfigSpec extends AnyFunSuite with Matchers {
     ex.message should include("unknown field")
   }
 
+  test("read rejects a file missing the contributor field entirely") {
+    val path = tempFile("""{}""")
+    val ex = the[SnapError] thrownBy Config.read(path)
+    ex.message should include("missing contributor")
+  }
+
+  test("read rejects a contributor value that is not an object") {
+    val path = tempFile("""{"contributor":"a@x"}""")
+    val ex = the[SnapError] thrownBy Config.read(path)
+    ex.message should include("contributor must be an object")
+  }
+
+  test("read rejects a contributor object missing id") {
+    val path = tempFile("""{"contributor":{}}""")
+    val ex = the[SnapError] thrownBy Config.read(path)
+    ex.message should include("missing contributor.id")
+  }
+
+  test("read rejects a contributor.id that is not a string") {
+    val path = tempFile("""{"contributor":{"id":1}}""")
+    val ex = the[SnapError] thrownBy Config.read(path)
+    ex.message should include("contributor.id must be a string")
+  }
+
   test("read does not itself validate contributor id grammar") {
     val path = tempFile("""{"contributor":{"id":"not-an-id"}}""")
     Config.read(path) shouldBe Some(ContributorConfig("not-an-id"))

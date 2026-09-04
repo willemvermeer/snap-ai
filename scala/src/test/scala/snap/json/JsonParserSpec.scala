@@ -23,6 +23,10 @@ class JsonParserSpec extends AnyFunSuite with Matchers {
     JsonParser.parse("42").asInstanceOf[Json.Num].isIntegral shouldBe true
   }
 
+  test("Json.Num.toBigIntOption is None for a non-integral number") {
+    JsonParser.parse("1.5").asInstanceOf[Json.Num].toBigIntOption shouldBe None
+  }
+
   test("rejects leading-zero numbers") {
     a[SnapError] should be thrownBy JsonParser.parse("012")
   }

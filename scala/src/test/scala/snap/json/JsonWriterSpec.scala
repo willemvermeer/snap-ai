@@ -24,6 +24,23 @@ class JsonWriterSpec extends AnyFunSuite with Matchers {
     JsonWriter.write(Json.Str("a\"b\\c\nd")) shouldBe "\"a\\\"b\\\\c\\nd\"\n"
   }
 
+  test("escapes carriage return, tab, and other control characters") {
+    JsonWriter.write(Json.Str("a\rb")) shouldBe "\"a\\rb\"\n"
+    JsonWriter.write(Json.Str("a\tb")) shouldBe "\"a\\tb\"\n"
+    // The expected value needs the literal six-character escape sequence to
+    // survive as text rather than being consumed by unicode-escape
+    // preprocessing, so it is built by concatenation instead of written directly
+    // (see the longer explanation in RepositoryCodecSpec).
+    val literalEscape = "\\" + "u0001"
+    JsonWriter.write(Json.Str("ab")) shouldBe ("\"" + "a" + literalEscape + "b" + "\"" + "\n")
+  }
+
+  test("writes null and boolean values") {
+    JsonWriter.write(Json.Null) shouldBe "null\n"
+    JsonWriter.write(Json.Bool(true)) shouldBe "true\n"
+    JsonWriter.write(Json.Bool(false)) shouldBe "false\n"
+  }
+
   test("round-trips through the parser") {
     val original = """{"format":1,"frontier":[["alice@example.com",1]],"patches":[]}"""
     val parsed = JsonParser.parse(original)

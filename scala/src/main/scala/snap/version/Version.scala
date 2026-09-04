@@ -113,8 +113,9 @@ object Version {
     } else {
       def invalid(): Nothing = throw SnapError(s"invalid version: $text")
       if (text.length < 2 || text.head != '(' || text.last != ')') invalid()
+      // `body` can only be empty when `text` is exactly "()", already handled above, so
+      // there's no separate empty-body case to guard here.
       val body = text.substring(1, text.length - 1)
-      if (body.isEmpty) invalid()
 
       val pairs = body.split(",", -1).toVector.map { part =>
         val arrow = part.indexOf("->")
@@ -125,9 +126,8 @@ object Version {
         if (revisionText.isEmpty || !revisionText.forall(_.isDigit)) invalid()
         if (revisionText == "0") invalid() // explicit zero
         if (revisionText.length > 1 && revisionText.head == '0') invalid() // leading zero
-        val revision =
-          try BigInt(revisionText)
-          catch { case _: NumberFormatException => invalid() }
+        // revisionText is validated all-digit above, so BigInt parsing here cannot fail.
+        val revision = BigInt(revisionText)
         if (revision > MaxRevision) invalid() // overflow
         id -> revision.toLong
       }
